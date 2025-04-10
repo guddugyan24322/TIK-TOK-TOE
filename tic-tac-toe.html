@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tic Tac Toe</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: white;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    #initial-options button, #submit-names-button {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin: 10px;
+      cursor: pointer;
+    }
+
+    #game-info {
+      text-align: center;
+      margin-top: 20px;
+      padding: 20px;
+      background-color: rgba(255, 255, 255, 0.9);
+      border-radius: 10px;
+      border: 2px solid black;
+      box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    h1 {
+      margin-top: 20px;
+      color: black;
+    }
+
+    #game-board {
+      background-color: black;
+      padding: 10px;
+      border-radius: 10px;
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      grid-template-rows: repeat(3, 100px);
+      gap: 5px;
+      justify-content: center;
+      margin: 20px auto;
+    }
+
+    .cell {
+      width: 100px;
+      height: 100px;
+      background-color: white;
+      border: 1px solid #ccc;
+      font-size: 36px;
+      font-weight: bold;
+      text-align: center;
+      line-height: 100px;
+      cursor: pointer;
+    }
+
+    .cell.taken {
+      cursor: not-allowed;
+    }
+
+    #status {
+      font-size: 20px;
+      margin: 20px;
+      color: black;
+    }
+
+    #popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: white;
+      padding: 20px;
+      border: 2px solid black;
+      text-align: center;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    #restart-button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .glowing-blue {
+      color: blue;
+      text-shadow: 0 0 5px blue, 0 0 10px blue, 0 0 20px blue;
+    }
+
+    .glowing-red {
+      color: red;
+      text-shadow: 0 0 5px red, 0 0 10px red, 0 0 20px red;
+    }
+
+    .glowing-violet {
+      color: violet;
+      text-shadow: 0 0 5px violet, 0 0 10px violet, 0 0 20px violet;
+    }
+  </style>
+</head>
+<body>
+  <div id="initial-options">
+    <button id="start-game-button">Start Game</button>
+    <button id="about-game-button">Know About Game</button>
+  </div>
+
+  <div id="game-info" class="hidden">
+    <h1>About the Game</h1>
+    <p>This game is developed by <strong>GUDDU GYAN</strong>, a student of <strong>Motihari College of Engineering</strong>. He is pursuing a <strong>B.Tech degree in Computer Science and Engineering (CSE)</strong> at Motihari College of Engineering.</p>
+    <p>If anyone is interested in making apps or games, they can join our team, <strong>Team Rudra's</strong>. The purpose of forming this team is to develop our own company!</p>
+    <button id="return-button">Return to Options</button>
+  </div>
+
+  <div id="name-input" class="hidden">
+    <h1>Enter Player Names</h1>
+    <input id="player1-name" type="text" placeholder="Player 1 (X)">
+    <input id="player2-name" type="text" placeholder="Player 2 (O)">
+    <button id="submit-names-button">Submit</button>
+  </div>
+
+  <h1 id="game-title" class="hidden">Tic Tac Toe</h1>
+  <div id="game-board" class="hidden"></div>
+  <p id="status" class="hidden"></p>
+  <div id="popup" class="hidden">
+    <h2 id="winner-message"></h2>
+    <button id="restart-button">Restart</button>
+  </div>
+
+  <script>
+    // DOM Elements
+    const initialOptions = document.getElementById("initial-options");
+    const gameInfo = document.getElementById("game-info");
+    const startGameButton = document.getElementById("start-game-button");
+    const aboutGameButton = document.getElementById("about-game-button");
+    const returnButton = document.getElementById("return-button");
+    const nameInput = document.getElementById("name-input");
+    const player1NameInput = document.getElementById("player1-name");
+    const player2NameInput = document.getElementById("player2-name");
+    const submitNamesButton = document.getElementById("submit-names-button");
+
+    const gameTitle = document.getElementById("game-title");
+    const board = document.getElementById("game-board");
+    const statusDisplay = document.getElementById("status");
+    const popup = document.getElementById("popup");
+    const winnerMessage = document.getElementById("winner-message");
+    const restartButton = document.getElementById("restart-button");
+
+    // Variables
+    let player1 = "Player 1";
+    let player2 = "Player 2";
+    let currentPlayer = "X";
+    let gameState = ["", "", "", "", "", "", "", "", ""];
+    let gameActive = false;
+
+    // Winning conditions
+    const winningConditions = [
+      [0, 1, 2],
+      [3, 4, 5],
+      [6, 7, 8],
+      [0, 3, 6],
+      [1, 4, 7],
+      [2, 5, 8],
+      [0, 4, 8],
+      [2, 4, 6],
+    ];
+
+    // Handle cell click
+    function handleCellClick(event) {
+      const cell = event.target;
+      const cellIndex = Array.from(board.children).indexOf(cell);
+
+      if (gameState[cellIndex] !== "" || !gameActive) return;
+
+      gameState[cellIndex] = currentPlayer;
+      cell.textContent = currentPlayer;
+
+      if (currentPlayer === "X") {
+        cell.classList.add("glowing-red");
+      } else {
+        cell.classList.add("glowing-violet");
+      }
+
+      checkResult();
+    }
+
+    // Check game result
+    function checkResult() {
+      let roundWon = false;
+
+      for (let i = 0; i < winningConditions.length; i++) {
+        const [a, b, c] = winningConditions[i];
+        if (
+          gameState[a] !== "" &&
+          gameState[a] === gameState[b] &&
+          gameState[a] === gameState[c]
+        ) {
+          roundWon = true;
+          break;
+        }
+      }
+
+      if (roundWon) {
+        const winner = currentPlayer === "X" ? player1 : player2;
+        winnerMessage.textContent = `${winner} wins the match!`;
+        popup.classList.remove("hidden");
+        gameActive = false;
+        return;
+      }
+
+      if (!gameState.includes("")) {
+        winnerMessage.textContent = "It's a draw!";
+        popup.classList.remove("hidden");
+        gameActive = false;
+        return;
+      }
+
+      currentPlayer = currentPlayer === "X" ? "O" : "X";
+      const nextPlayer = currentPlayer === "X" ? player1 : player2;
+      statusDisplay.innerHTML = `<span class="glowing-blue">${nextPlayer}'s turn (${currentPlayer})</span>`;
+    }
+
+    // Restart the game
+    function restartGame() {
+      gameState = ["", "", "", "", "", "", "", "", ""];
+      currentPlayer = "X";
+      gameActive = true;
+      popup.classList.add("hidden");
+      Array.from(board.children).forEach((cell) => {
+        cell.textContent = "";
+        cell.classList.remove("glowing-red", "glowing-violet");
+      });
+      statusDisplay.innerHTML = `<span class="glowing-blue">${player1}'s turn (X)</span>`;
+    }
+
+    // Initialize the game board
+    function initializeGame() {
+      board.innerHTML = "";
+
+      for (let i = 0; i < 9; i++) {
+        const cell = document.createElement("div");
+        cell.classList.add("cell");
+        cell.addEventListener("click", handleCellClick);
+        board.appendChild(cell);
+      }
+
+      statusDisplay.innerHTML = `<span class="glowing-blue">${player1}'s turn (X)</span>`;
+      restartButton.addEventListener("click", restartGame);
+    }
+
+    // Start the game after entering player names
+    submitNamesButton.onclick = function () {
+      const player1Input = player1NameInput.value.trim();
+      const player2Input = player2NameInput.value.trim();
+
+      player1 = player1Input !== "" ? player1Input : "Player 1";
+      player2 = player2Input !== "" ? player2Input : "Player 2";
+
+      nameInput.classList.add("hidden");
+      gameTitle.classList.remove("hidden");
+      board.classList.remove("hidden");
+      statusDisplay.classList.remove("hidden");
+
+      gameActive = true;
+      initializeGame();
+    };
+
+    // Show the name input section
+    startGameButton.onclick = function () {
+      initialOptions.classList.add("hidden");
+      nameInput.classList.remove("hidden");
+    };
+
+    // Show the "About Game" section
+    aboutGameButton.onclick = function () {
+      initialOptions.classList.add("hidden");
+      gameInfo.classList.remove("hidden");
+    };
+
+    // Return to the initial menu
+    returnButton.onclick = function () {
+      gameInfo.classList.add("hidden");
+      initialOptions.classList.remove("hidden");
+    };
+  </script>
+</body>
+</html>
